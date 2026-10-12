@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <h1>Student Management System</h1>
+  <p>Add, search, update and export student records. Every change you push is tested, containerized and deployed automatically.</p>
+</section>
+
+<section class="stats">
+  <div class="stat"><span class="stat-label">Total students</span><span class="stat-value">{{ stats.total }}</span></div>
+  <div class="stat"><span class="stat-label">Courses</span><span class="stat-value">{{ stats.courses }}</span></div>
+  <div class="stat"><span class="stat-label">Top course</span><span class="stat-value">{{ stats.top_course }}</span></div>
+  <div class="stat"><span class="stat-label">Average year</span><span class="stat-value">{{ stats.avg_year }}</span></div>
+</section>
+
+<div class="layout">
+  <main>
+    <div class="card">
+      <form class="toolbar" method="get" action="{{ url_for('index') }}">
+        <input class="search" type="search" name="q" value="{{ filters.q }}" placeholder="Search students">
+        <select name="course" aria-label="Filter by course">
+          <option value="">All courses</option>
+          {% for c in courses %}
+            <option value="{{ c }}" {% if filters.course == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+        <select name="year" aria-label="Filter by year">
+          <option value="">All years</option>
+          {% for y in range(1, 7) %}
+            <option value="{{ y }}" {% if filters.year == y %}selected{% endif %}>Year {{ y }}</option>
+          {% endfor %}
+        </select>
+        <select name="sort" aria-label="Sort order">
+          {% for key, label in sort_labels.items() %}
+            <option value="{{ key }}" {% if filters.sort == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn" type="submit">Apply</button>
+      </form>
+
+      {% if error %}
+        <div class="error-box">{{ error }}</div>
+      {% endif %}
+
+      {% if students %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Student</th><th>Course</th><th>Year</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for s in students %}
+            <tr>
+              <td class="muted">#{{ s.id }}</td>
+              <td>
+                <div class="person">
+                  <span class="avatar" style="--h: {{ (s.id * 47) % 360 }}">{{ s.name[:1]|upper }}</span>
+                  <div>
+                    <strong>{{ s.name }}</strong>
+                    <small>{{ s.email }}</small>
+                  </div>
+                </div>
+              </td>
+              <td><span class="tag">{{ s.course }}</span></td>
+              <td><span class="badge">Year {{ s.year }}</span></td>
+              <td class="actions">
+                <a class="btn btn-ghost btn-sm" href="{{ url_for('edit_student', student_id=s.id) }}">Edit</a>
+                <form class="inline" method="post" action="{{ url_for('delete_student', student_id=s.id) }}" data-confirm="Remove {{ s.name }} from the system?">
+                  <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pager">
+        <span>Showing {{ students|length }} of {{ pagination.total }} students</span>
+        {% if pagination.pages > 1 %}
+        <div class="links">
+          {% if pagination.has_prev %}
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('index', page=pagination.prev_num, **active) }}">Previous</a>
+          {% endif %}
+          <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+          {% if pagination.has_next %}
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('index', page=pagination.next_num, **active) }}">Next</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% elif stats.total == 0 %}
+        <div class="empty">
+          <strong>No students yet</strong>
+          Add the first one using the form, or load demo data from the tools panel.
+        </div>
+      {% else %}
+        <div class="empty">
+          <strong>No students match your filters</strong>
+          <a href="{{ url_for('index') }}">Clear filters</a>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <aside>
+    <div class="card">
+      <h2>Add a student</h2>
+      <form method="post" action="{{ url_for('add_student') }}">
+        <div class="field"><label for="name">Full name</label><input id="name" name="name" placeholder="Full name" required></div>
+        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" placeholder="name@example.com" required></div>
+        <div class="field"><label for="course">Course</label><input id="course" name="course" placeholder="CSE" required></div>
+        <div class="field">
+          <label for="year">Year</label>
+          <select id="year" name="year">
+            {% for y in range(1, 7) %}<option value="{{ y }}">Year {{ y }}</option>{% endfor %}
+          </select>
+        </div>
+        <button class="btn btn-block" type="submit">Add student</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Students by course</h2>
+      {% for item in stats.by_course %}
+        <div class="bar-row">
+          <span>{{ item.label }}</span>
+          <div class="bar"><span style="width: {{ item.pct }}%"></span></div>
+          <span class="bar-count">{{ item.count }}</span>
+        </div>
+      {% else %}
+        <p class="muted">No data yet.</p>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <h2>Students by year</h2>
+      {% for item in stats.by_year %}
+        <div class="bar-row">
+          <span>{{ item.label }}</span>
+          <div class="bar"><span style="width: {{ item.pct }}%"></span></div>
+          <span class="bar-count">{{ item.count }}</span>
+        </div>
+      {% else %}
+        <p class="muted">No data yet.</p>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <h2>Tools</h2>
+      <div class="tools">
+        <a class="btn btn-ghost" href="{{ url_for('export_csv', **active) }}">Export CSV</a>
+        <form method="post" action="{{ url_for('seed') }}">
+          <button class="btn btn-ghost btn-block" type="submit">Load demo data</button>
+        </form>
+        <a class="btn btn-ghost" href="{{ url_for('api_docs') }}">View API docs</a>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

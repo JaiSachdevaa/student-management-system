@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}API docs | Student Management System{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>REST API</h1>
+  <p>Everything you can do in the website is also available as JSON endpoints.</p>
+</section>
+
+<div class="card">
+  <h2>Endpoints</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><span class="method m-get">GET</span></td><td><code>/health</code></td><td>Health check used by Docker and the pipeline</td></tr>
+        <tr><td><span class="method m-get">GET</span></td><td><code>/api/students</code></td><td>List all students</td></tr>
+        <tr><td><span class="method m-post">POST</span></td><td><code>/api/students</code></td><td>Create a student</td></tr>
+        <tr><td><span class="method m-get">GET</span></td><td><code>/api/students/&lt;id&gt;</code></td><td>Get one student</td></tr>
+        <tr><td><span class="method m-put">PUT</span></td><td><code>/api/students/&lt;id&gt;</code></td><td>Update a student</td></tr>
+        <tr><td><span class="method m-delete">DELETE</span></td><td><code>/api/students/&lt;id&gt;</code></td><td>Delete a student</td></tr>
+        <tr><td><span class="method m-get">GET</span></td><td><code>/export.csv</code></td><td>Download students as CSV, supports the same filters as the dashboard</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Example request body</h2>
+  <pre><code>{
+  "name": "Asha Verma",
+  "email": "asha@example.com",
+  "course": "CSE",
+  "year": 2
+}</code></pre>
+</div>
+
+<div class="card" style="margin-bottom: 40px;">
+  <h2>Try it from a terminal</h2>
+  <pre><code>curl.exe -X POST http://localhost:8000/api/students -H "Content-Type: application/json" -d "{\"name\":\"Asha Verma\",\"email\":\"asha@example.com\",\"course\":\"CSE\",\"year\":2}"</code></pre>
+  <p class="muted">Status codes: 201 created, 400 invalid data, 404 not found, 409 email already exists.</p>
+</div>
+{% endblock %}
